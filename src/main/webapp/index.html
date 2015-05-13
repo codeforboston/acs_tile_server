@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=8" />
+<meta charset="utf-8">
+
+<title>Census ACS Server</title>
+
+<link href="./css/censusacs.css" rel="stylesheet">
+
+<link href="./bootstrap/css/bootstrap.min.css" rel="stylesheet">
+<link href="./bootstrap/css/bootstrap-dialog.min.css" rel="stylesheet">
+
+<link href="./leaflet-0.7.3/leaflet.css" rel="stylesheet">
+
+
+<script data-main="js/censusacs/censusacs.js" src="js/require.js"></script>
+
+<script type="text/template" id="progress_dialog">
+
+	 <div class="page-header">
+		<div class="progress_file">
+			<%=data.currentfile%>
+     	</div> 
+  	 </div>	
+	 <div class="progress">
+       <div class="progress-bar" role="progressbar" aria-valuenow="<%=data.current%>" aria-valuemin="0" aria-valuemax="100" style="width:<%=data.current%>%">
+              <span class="sr-only"><%=data.current%>% Complete</span>
+       </div>
+     </div>
+	 <div class="progress">
+       <div class="progress-bar" role="progressbar" aria-valuenow="<%=data.global%>"  aria-valuemin="0" aria-valuemax="100" style="width:<%=data.global%>%">
+              <span class="sr-only"><%=data.global%>% Complete</span>
+       </div>
+     </div>
+
+</script>
+
+<script type="text/template" id="listdata">
+	
+			<div id="datalist" >
+				<div>
+					<button class="btn btn-default next_button" title="Build map ..."  >Next</button>
+				</div>
+				<div class="page-header">
+  					<h3>Please select fields to display on map:</h3>
+				</div>
+				<div class="panel-group" id="accordion_census" role="tablist" aria-multiselectable="true">
+					<% var num=0; for (var key in list) { %>
+					
+						<div class="panel panel-default">
+							<div class="panel-heading" role="tab" id="heading<%=num %>">
+								<h2 class="panel-title">
+									<a class="accordion-toggle " data-toggle="collapse" data-parent="#accordion_census" href="#collapse<%=num %>">
+										<%=key %>
+									</a>
+								</h2>
+							</div>
+							<div id="collapse<%=num %>" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading<%=num %>">
+								<div class="panel-body	">
+									<table class="table">
+
+									<tr><th>Table ID</th><th>Sequence</th><th>Position</th><th>Eval</th><th>Title</th><th>Select</th></tr>
+						
+									<% for (var idx in list[key]) { %>
+
+							 			<tr class='element' >
+											<% if (list[key][idx].type=="data") { %>
+												<td><%=list[key][idx].name %></td>
+												<td><%=list[key][idx].sequence %></td>
+												<td><%=list[key][idx].position %></td>
+												<td><% for (var elem in list[key][idx].eval) { %>
+															<div><% if (elem=='140_00') { %>
+																			Census Tract
+          															 <% } else { %>	
+																	 	<%=elem%> 
+																	 <% } %> 
+																	 <%=list[key][idx].eval[elem] %>
+															</div>
+														<% } %>
+												</td>
+											<% } else { %>
+												<td>N/A</td>
+												<td>N/A</td>
+												<td>N/A</td>
+											<% } %>
+ 
+							   				<td><%=list[key][idx].title %></td>
+							   				<td>
+												<% if (list[key][idx].type=="data") { %>
+													<div class="checkbox"><input type="checkbox" value="" class="checkbox_ref" id="field_<%=list[key][idx].name%>_<%=list[key][idx].sequence%>_<%=list[key][idx].position%>"></div>
+												<% } %>
+											</td>
+							  			</tr>
+
+									<% } %>
+
+									</table>
+								</div>
+							</div>
+						</div>
+					
+				   <% num++; } %>
+				</div>
+			</div>
+		
+ </script>
+
+<script type="text/template" id="checkdata">
+		
+			<div id="acsfolderlist" >
+				<div class="row">
+					<div class="col-md-4" id="data_table" >
+		  				<table class="table">
+							<tr><th>Data Type</th><th>Year</th><th>Aggregation</th></tr>
+				   			<% for (var idx in list)  { %>
+								<tr class='acs_select' data-path="<%=list[idx].path%>" ><td><%=list[idx].data %></td>
+							   		<td><%=list[idx].year %></td>
+							   		<td><%=list[idx].aggregate %></td>
+								</tr>
+							<% } %>
+						</table>
+					</div>
+					<div class="col-md-8">
+						<div id="us_map">
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-md-12 page-header">
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-md-8" >
+						<span id='help_message'></span>
+					</div>
+					<div class="col-md-4" >
+						<button class="btn btn-default next_button" title="Please select acs data layer then a US state."  >Next</button>
+					</div>
+				</div>
+			</div>
+		
+ </script>
+
+
+</head>
+<body>
+
+	<!-- Static navbar -->
+	<div class="navbar navbar-default navbar-static-top navbar-inverse"
+		role="navigation">
+		<div class="container">
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle" data-toggle="collapse"
+					data-target=".navbar-collapse">
+					<span class="sr-only">Toggle navigation</span> <span
+						class="icon-bar"></span> <span class="icon-bar"></span> <span
+						class="icon-bar"></span>
+				</button>
+				<a class="navbar-brand" href="#">Census ACS Server</a>
+			</div>
+			<div id="navbar" class="navbar-collapse collapse">
+				<ul class="nav navbar-nav">
+					<li class="dropdown"><a href="#" class="dropdown-toggle"
+						data-toggle="dropdown" role="button" aria-expanded="false">Action<span
+							class="caret"></span></a>
+						<ul class="dropdown-menu" role="menu">
+							<li><a href="#buildmap">Build a map</a></li>
+						</ul></li>
+					<li><a href="#about">About</a></li>
+				</ul>
+			</div>
+			<!--/.nav-collapse -->
+		</div>
+	</div>
+
+	<div class="container" id="main_view"></div>
+
+</body>
+</html>

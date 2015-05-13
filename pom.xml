@@ -1,0 +1,338 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>codeforboston</groupId>
+	<artifactId>ungentry</artifactId>
+	<version>1.0</version>
+	<packaging>war</packaging>
+	<name>CensusACSServer</name>
+
+	<description>Census/ACS data manager and data map builder</description>
+
+	<build>
+		<sourceDirectory>src</sourceDirectory>
+		<testSourceDirectory>test</testSourceDirectory>
+		<plugins>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-war-plugin</artifactId>
+				<version>2.5</version>
+				<configuration>
+					<archive>
+						<manifest>
+							<mainClass>org.cfb.ungentry.census.web.jetty.EmbeddedServer</mainClass>
+							<addClasspath>true</addClasspath>
+						</manifest>
+					</archive>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.1</version>
+				<configuration>
+					<source>1.7</source>
+					<target>1.7</target>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>main-class-placement</id>
+						<phase>package</phase>
+						<configuration>
+							<tasks>
+
+								<delete
+									dir="${project.build.directory}/${project.artifactId}-${project.version}/org/" />
+								<mkdir
+									dir="${project.build.directory}/${project.artifactId}-${project.version}/org/" />
+								<copy
+									todir="${project.build.directory}/${project.artifactId}-${project.version}/org/">
+									<fileset dir="${project.build.directory}/classes/org/">
+										<include name="**/*.class" />
+									</fileset>
+								</copy>
+
+								<delete
+									dir="${project.build.directory}/${project.artifactId}-${project.version}/servlet" />
+								<mkdir
+									dir="${project.build.directory}/${project.artifactId}-${project.version}/servlet/" />
+								<move
+									todir="${project.build.directory}/${project.artifactId}-${project.version}/servlet/">
+									<fileset
+										dir="${project.build.directory}/${project.artifactId}-${project.version}/">
+										<include name="WEB-INF/**/*" />
+										<include name="js-protected/**/*" />
+										<include name="js/**/*" />
+										<include name="html/**/*" />
+										<include name="css/**/*" />
+										<include name="bootstrap/**/*" />
+										<include name="leaflet-0.7.3/**/*" />
+										<include name="*.jsp" />
+										<include name="*.html" />
+									</fileset>
+								</move>
+
+
+								<delete
+									dir="${project.build.directory}/${project.artifactId}-${project.version}/WEB-INF/" />
+								<delete
+									dir="${project.build.directory}/${project.artifactId}-${project.version}/js-protected/" />
+								<delete
+									dir="${project.build.directory}/${project.artifactId}-${project.version}/js/" />
+								<delete
+									dir="${project.build.directory}/${project.artifactId}-${project.version}/html/" />
+								<delete
+									dir="${project.build.directory}/${project.artifactId}-${project.version}/css/" />
+								<delete
+									dir="${project.build.directory}/${project.artifactId}-${project.version}/bootstrap/" />
+
+
+								<delete
+									dir="${project.build.directory}/${project.artifactId}-${project.version}/lib" />
+								<mkdir
+									dir="${project.build.directory}/${project.artifactId}-${project.version}/lib" />
+								<copy
+									todir="${project.build.directory}/${project.artifactId}-${project.version}/lib/">
+									<fileset dir="${basedir}/lib/">
+										<include name="**/*.jar" />
+									</fileset>
+								</copy>
+
+								<delete
+									file="${project.build.directory}/${project.artifactId}-${project.version}/servlet/WEB-INF/lib/stax-api-1.0.1.jar" />
+
+								<jar destfile="${project.build.directory}/jetty-censusacsserver.jar"
+									basedir="." includes="**/*.class">
+
+									<manifest>
+										<!-- Who is building this jar? -->
+										<attribute name="Built-By" value="Julien BOUVIER-VOLAILLE" />
+										<!-- Information about the program itself -->
+										<attribute name="Implementation-Vendor" value="JBV" />
+										<attribute name="Implementation-Title" value="embedded" />
+										<attribute name="Implementation-Version" value="1.0.0" />
+
+										<attribute name="Main-Class"
+											value="org.cfb.ungentry.census.web.jetty.EmbeddedServer" />
+
+										<!-- details -->
+									</manifest>
+
+									<fileset
+										dir="${project.build.directory}/${project.artifactId}-${project.version}" />
+
+									<zipgroupfileset
+										dir="${project.build.directory}/${project.artifactId}-${project.version}/servlet/WEB-INF/lib/"
+										includes="**/*.jar" />
+									<zipgroupfileset
+										dir="${project.build.directory}/${project.artifactId}-${project.version}/lib/"
+										includes="**/*.jar" />
+
+
+								</jar>
+
+
+							</tasks>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+		</plugins>
+	</build>
+
+	<dependencies>
+
+		<!-- local -->
+
+		<dependency>
+
+			<groupId>jmapprojlib</groupId>
+			<artifactId>jmapprojlib</artifactId>
+			<version>1.0</version>
+
+			<!-- to migrate to a repository -->
+			<scope>system</scope>
+			<systemPath>${basedir}/lib/jmapprojlib.jar</systemPath>
+
+		</dependency>
+
+		<dependency>
+
+			<groupId>common</groupId>
+			<artifactId>common</artifactId>
+			<version>1.0</version>
+
+			<!-- to migrate to a repository -->
+			<scope>system</scope>
+			<systemPath>${basedir}/lib/commons-lang3-3.3.2.jar</systemPath>
+
+		</dependency>
+
+		<dependency>
+
+			<groupId>topojson-j</groupId>
+			<artifactId>topojson-j</artifactId>
+			<version>1.0</version>
+
+			<!-- to migrate to a repository -->
+			<scope>system</scope>
+			<systemPath>${basedir}/lib/topojson-j.jar</systemPath>
+
+		</dependency>
+		
+		<dependency>
+			<groupId>commons-cli</groupId>
+			<artifactId>commons-cli</artifactId>
+			<version>1.2</version>
+		</dependency>
+				
+
+		<!-- Web integration -->
+
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>2.2.4</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.glassfish.jersey.containers</groupId>
+			<!-- if your container implements Servlet API older than 3.0, use "jersey-container-servlet-core" -->
+			<artifactId>jersey-container-servlet</artifactId>
+			<version>2.13</version>
+		</dependency>
+
+		<!-- Required only when you are using JAX-RS Client -->
+		<dependency>
+			<groupId>org.glassfish.jersey.core</groupId>
+			<artifactId>jersey-client</artifactId>
+			<version>2.13</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.glassfish.jersey.containers</groupId>
+			<artifactId>jersey-container-jetty-servlet</artifactId>
+			<version>2.13</version>
+		</dependency>
+
+
+		<dependency>
+			<groupId>org.eclipse.jetty</groupId>
+			<artifactId>jetty-server</artifactId>
+			<version>9.2.0.M0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.eclipse.jetty</groupId>
+			<artifactId>jetty-servlet</artifactId>
+			<version>9.2.0.M0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.eclipse.jetty</groupId>
+			<artifactId>jetty-webapp</artifactId>
+			<version>9.2.0.M0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.eclipse.jetty</groupId>
+			<artifactId>jetty-util</artifactId>
+			<version>9.2.0.M1</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.eclipse.jetty</groupId>
+			<artifactId>jetty-jaas</artifactId>
+			<version>9.2.0.M0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.eclipse.jetty</groupId>
+			<artifactId>jetty-annotations</artifactId>
+			<version>9.2.0.M0</version>
+		</dependency>
+
+
+		<dependency>
+			<groupId>org.eclipse.jetty</groupId>
+			<artifactId>apache-jsp</artifactId>
+			<version>9.2.0.M0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>commons-net</groupId>
+			<artifactId>commons-net</artifactId>
+			<version>3.3</version>
+		</dependency>
+
+
+		<!-- Normal features -->
+
+		<dependency>
+			<groupId>org.xerial</groupId>
+			<artifactId>sqlite-jdbc</artifactId>
+			<version>3.7.15-M1</version>
+		</dependency>
+
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.8.1</version>
+		</dependency>
+
+
+
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-collections4</artifactId>
+			<version>4.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-email</artifactId>
+			<version>1.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>1.3.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.freemarker</groupId>
+			<artifactId>freemarker</artifactId>
+			<version>2.3.19</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jsoup</groupId>
+			<artifactId>jsoup</artifactId>
+			<version>1.8.1</version>
+		</dependency>
+		<dependency>
+			<groupId>log4j</groupId>
+			<artifactId>log4j</artifactId>
+			<version>1.2.16</version>
+		</dependency>
+		<dependency>
+			<groupId>javax.mail</groupId>
+			<artifactId>mail</artifactId>
+			<version>1.4</version>
+		</dependency>
+
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>jstl</artifactId>
+			<version>1.2</version>
+		</dependency>
+
+	</dependencies>
+
+</project>
