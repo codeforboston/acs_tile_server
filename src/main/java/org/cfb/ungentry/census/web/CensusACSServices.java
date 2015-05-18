@@ -10,8 +10,10 @@ import java.util.List;
 import java.util.TreeMap;
 import java.util.Vector;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -25,6 +27,7 @@ import org.apache.log4j.Logger;
 import org.cfb.ungentry.census.data.ACSLoader;
 import org.cfb.ungentry.census.data.IndicesBuilder;
 import org.cfb.ungentry.census.data.SequenceAndTableNumber.Element;
+import org.cfb.ungentry.census.data.TilesEngine;
 import org.cfb.ungentry.census.toolbox.Toolbox;
 import org.cfb.ungentry.network.DownloadFTPTask;
 import org.cfb.ungentry.network.DownloadFTPTask.Status;
@@ -108,6 +111,18 @@ public class CensusACSServices {
 		return DownloadFTPTask.getDownloadStatus(iList);
 	}
 	
+	@GET
+	@Produces(MediaType.APPLICATION_OCTET_STREAM)
+	@Path("/tiles/{state}/{zoom}/{x}/{y}.png")
+	public byte[] tiles( @Context SecurityContext sc, @PathParam("state") String iState, @PathParam("zoom") String iZoom, @PathParam("x") String iX, @PathParam("y") String iY) throws Exception {
+		try {
+			return TilesEngine.getTile(iState, iZoom, iX, iY);
+		} catch (Exception e) {
+			LOGGER.info("Image not generated ...");
+			throw new NotFoundException(e.getMessage());		
+		}
+		
+	}
 	
 	
 }
