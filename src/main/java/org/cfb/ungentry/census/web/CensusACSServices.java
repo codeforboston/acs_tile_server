@@ -22,6 +22,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.SecurityContext;
 
+import json.topojson.topology.Topology;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.cfb.ungentry.census.data.ACSLoader;
@@ -119,6 +121,19 @@ public class CensusACSServices {
 			return TilesEngine.getTile(iState, iZoom, iX, iY);
 		} catch (Exception e) {
 			LOGGER.info("Image not generated ...");
+			throw new NotFoundException(e.getMessage());		
+		}
+		
+	}
+	
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/jsontiles/{state}/{zoom}/{x}/{y}.json")
+	public Topology jsonTiles( @Context SecurityContext sc, @PathParam("state") String iState, @PathParam("zoom") String iZoom, @PathParam("x") String iX, @PathParam("y") String iY) throws Exception {
+		try {
+			return TilesEngine.getToplogyTile(iState, iZoom, iX, iY);
+		} catch (Exception e) {
+			LOGGER.info("Json not generated ...");
 			throw new NotFoundException(e.getMessage());		
 		}
 		

@@ -297,6 +297,25 @@ public class ACSLoader {
 			throw new Exception("Unable to find tile "+iZoom+" "+iX+" "+iY);
 		}
 
+		@Override
+		public Topology getTopology(String iZoom, String iX, String iY)
+				throws Exception {
+
+			TileElement aTile = _levelTree.get(iZoom+"/"+iX+"/"+iY);
+			if (aTile!=null) {
+				FeatureCollection aReducedFeat = aTile.collection;
+				System.out.println("Nb of shapes"+ aReducedFeat._shapes.size() + " " + Arrays.toString(aReducedFeat._shapes.keySet().toArray()) );
+				Topology aTopo =  TopojsonApi.featureToTopology(aReducedFeat, _map, "MAP");
+
+				aTopo.simplify(50);
+				aTopo.quantize(4);
+
+				return aTopo;
+
+			}	
+			throw new Exception("Unable to find tile "+iZoom+" "+iX+" "+iY);
+		}
+
 	}
 
 	public static void buildTopoJson(String iSavingPath, String iGeoCSVFile, String iState, String iField){
