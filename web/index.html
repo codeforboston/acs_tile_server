@@ -9,6 +9,7 @@
 	<script src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
 	
 	<script src="./js/stamen.js"></script>
+	<script src="./js/ColorBrewer.js"></script>
 	<script src="./js/topojson.v1.min.js"></script>
 	<script src="./js/JsonTileLayer.js"></script>
 	
@@ -25,11 +26,14 @@
 		
 		new L.StamenTileLayer("toner").addTo(map);
 		
-		L.jsonTileLayer('https://localhost:10110/{id}/{z}/{x}/{y}.json', {
+		var jsonTile = L.jsonTileLayer('https://localhost:10110/{id}/jsontiles/{z}/{x}/{y}.json', {
 			maxZoom: 16,
 			attribution: 'Census ACS Server',
-			id: 'censusacs/rest/censusacs/jsontiles/MA'
-		}).addTo(map);
+			id: 'censusacs/rest/censusacs/MA'
+		});
+		
+		jsonTile.addTo(map);
+		jsonTile.selectProperty("B00002_1_8");
 
 	</script>
 	

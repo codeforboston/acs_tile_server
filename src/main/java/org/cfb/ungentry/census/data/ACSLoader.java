@@ -216,11 +216,13 @@ public class ACSLoader {
 		ArcMap _map;
 		String _saving_path;
 		Display _display; 
-		Colorifier _colorifier;
+		
+		String[] _fields;
+		HashMap<String,Colorifier> _colorifiers;
 
 		LevelTree<TileElement> _levelTree;
 
-		TopologyProcessor(ArcMap iMap, String iSavingPath,Colorifier iColorifier){
+		TopologyProcessor(ArcMap iMap, String iSavingPath, FeatureCollection iCollection, String[] iFields){
 
 			_map = iMap;
 			_saving_path = iSavingPath;
@@ -229,12 +231,24 @@ public class ACSLoader {
 			_display = new Display(x, x);
 			_display.hide();
 			_display.start();
-			_colorifier = iColorifier; /* new JenksColorifierGeojson(aFeat ,iField); */
+			
+			_fields = iFields;
+			_colorifiers =  buildColorifiers(iCollection, iFields); /* new JenksColorifierGeojson(aFeat ,iField); */
 
 			_levelTree = new LevelTree<TileElement>();
 
 		}
 
+		public  HashMap<String,Colorifier> buildColorifiers(FeatureCollection iCollection, String[] iFields){
+			HashMap<String,Colorifier> result = new HashMap<String,Colorifier>();
+		
+			for (String iField:iFields){
+				result.put(iField, new JenksColorifierGeojson(iCollection ,iField) );
+			}
+			
+			return result;
+		}
+		
 		@Override
 		public void process(TileElement iTile) {
 
@@ -247,26 +261,10 @@ public class ACSLoader {
 				e.printStackTrace();
 			}
 
-			/*
-				aTopo.simplify(1000);
-				aTopo.quantize(4);
-
-				String aJson = TopojsonApi.getJson(aTopo, false);
-				try {
-					IOUtils.write(aJson,new FileOutputStream(new File(aSavingName+ aTopo._meta_properties.get("y") + ".json")));
-				} catch (FileNotFoundException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			 */
-
 		}
 
 		@Override
-		public byte[] get(String iZoom, String iX, String iY) throws Exception  {
+		public byte[] get(String iField, String iZoom, String iX, String iY) throws Exception  {
 
 			TileElement aTile = _levelTree.get(iZoom+"/"+iX+"/"+iY);
 			if (aTile!=null) {
@@ -281,11 +279,8 @@ public class ACSLoader {
 
 					_display.setBound(aTopo._bnd);
 
-					aTopo.fill(_display, _colorifier); // Provide in init the global feature
-
-					_display.bufferGraphics.setColor(new Color(255,0,0));
-					_display.bufferGraphics.drawLine(0,0, 256, 0 );
-					_display.bufferGraphics.drawLine(0,0, 0, 256 );
+					Colorifier aColor = _colorifiers.get(iField);
+					if (aColor!=null) aTopo.fill(_display, aColor); // Provide in init the global feature
 
 					_display.render();
 
@@ -316,9 +311,20 @@ public class ACSLoader {
 			throw new Exception("Unable to find tile "+iZoom+" "+iX+" "+iY);
 		}
 
+		@Override
+		public double[] getClasses(String iField) {
+			return _colorifiers.get(iField).getClasses();
+		}
+
+		@Override
+		public String[] getProperties() {
+			// TODO Auto-generated method stub
+			return _fields;
+		}
+
 	}
 
-	public static void buildTopoJson(String iSavingPath, String iGeoCSVFile, String iState, String iField){
+	public static void buildTopoJson(String iSavingPath, String iGeoCSVFile, String iState, String[] iFields){
 
 		String aStateCode = String.format("%02d0", new Integer(IndicesBuilder.listStateNumberByName().get(iState) ) );
 		System.out.println("Proceed for state:"+aStateCode);
@@ -328,7 +334,7 @@ public class ACSLoader {
 		Merger aMerger = new Merger();
 		aMerger.addStep(new MergeStep("GISJOIN","%s", iGeoCSVFile, "NHGISCODE","%s", true));
 
-		System.out.println("Proceed for field:"+iField);
+		System.out.println("Proceed for field:"+iFields[0]);
 
 		FeatureCollection aFeat;
 		try {
@@ -341,9 +347,9 @@ public class ACSLoader {
 
 			aFeat._bnd = aFeat.getMergedBound();
 
-			quickDisplay(aFeat, iField);
+			quickDisplay(aFeat, iFields[0]);
 
-			TopologyProcessor aProcessor = new TopologyProcessor(aMap, iSavingPath,  new JenksColorifierGeojson(aFeat ,iField));
+			TopologyProcessor aProcessor = new TopologyProcessor(aMap, iSavingPath,  aFeat, iFields);
 
 			FeatureCollection.processTiles(aFeat, 1, 15, aProcessor);
 
@@ -421,7 +427,7 @@ public class ACSLoader {
 
 		// At that point we have extracted data from ACS data
 		// We need to continue to build the map
-		buildTopoJson(aACSFileName, geoAcsCSVFile, iState, aFilter[0]);
+		buildTopoJson(aACSFileName, geoAcsCSVFile, iState, aFilter);
 
 		return "OK";
 	}

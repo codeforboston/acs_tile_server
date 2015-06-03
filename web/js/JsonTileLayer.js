@@ -23,8 +23,12 @@ L.JsonTileLayer = L.GridLayer.extend({
 		this._url = url;
 		this._layers_id = {};
 		this._tilesKeys = {};
-
+		
 		options = L.setOptions(this, options);
+		
+		var pathArray = this._url.split( '/' );
+		this._protocol = pathArray[0];
+		this._host = pathArray[2];
 
 		// detecting retina displays, adjusting tileSize and zoom levels
 		if (options.detectRetina && L.Browser.retina && options.maxZoom > 0) {
@@ -44,8 +48,57 @@ L.JsonTileLayer = L.GridLayer.extend({
 		if (!L.Browser.android) {
 			this.on('tileunload', this._onTileRemove);
 		}
+		
+
+		var self = this;
+		var prop_url =  this._protocol+"//"+this._host+"/"+options.id+"/list/properties.json?callback=?";
+		
+		$.getJSON(prop_url , function(data){
+			
+			console.log(data);
+			self._list_properties = data;
+			self._properties_classes = {};
+			
+		});
+		
 	},
 
+	getProperties: function(){
+		return this._list_properties;	
+	},
+	
+	selectProperty: function(property){
+		
+		console.log("Entry select property");
+		console.log(this);
+		if (this._list_properties){
+			
+			if (this._list_properties.indexOf(property)>=0) {
+				this._field = property;
+				var self = this;
+				$.getJSON( this._protocol+"//"+this._host+"/"+this.options.id+"/classes/"+this._field+".json?callback=?" , function(data){
+					
+					console.log("Loaded classes properties ...");
+					console.log(data);
+					console.log(self);
+					self._properties_classes[self._field]=data;
+					self._refreshStyles();
+					
+				} );
+			}
+			
+		} else {
+			
+			var self = this;
+			setTimeout(function(){
+				console.log(self);
+				self.selectProperty(property);
+			}, 2000);
+			
+		}
+		
+	},
+	
 	setUrl: function (url, noRedraw) {
 		this._url = url;
 
@@ -55,16 +108,48 @@ L.JsonTileLayer = L.GridLayer.extend({
 		return this;
 	},
 
+	_style : function(feature){
+		
+		if (this._field){
+			
+			var val = feature.properties[this._field];
+			var classes = this._properties_classes[this._field];
+			
+			for (var i=1; i<classes.length;i++){
+				if (val<=classes[i]) {
+					return {color: colorbrewer['YlGnBu'][classes.length-1][i], "weight": 0 , "fillOpacity": 0.5};
+				}
+			}
+			
+		} else {
+			return {color: "#AF0000", "weight": 0 , "fillOpacity": 0.1};
+		}
+	},
+	
+	_refreshStyles : function(){
+		
+		console.log("Refresh Styles");
+		console.log(this);
+		var self = this;
+		for (var key in this._layers_id) {
+			var layer = this._layers_id[key].layer;
+			$.each(layer._layers,function(idx){	
+				this.setStyle(self._style(this.feature));
+			});
+		}
+			
+	},
+	
 	_getJsonRetriever : function(url,tile,done){
 		
-		var inner_url = url;
-		var inner_tile = tile;
-		var inner_done = done;
-		var inner_zoom = this._tileZoom;
 		var self = this;
-		
 		return function( data ) {
 	
+			var inner_url = url;
+			var inner_tile = tile;
+			var inner_done = done;
+			var inner_zoom = self._tileZoom;
+			
 			var aFeature = topojson.feature(data, data.objects.MAP);
 			
 			var keys = [];
@@ -78,9 +163,10 @@ L.JsonTileLayer = L.GridLayer.extend({
 				
 				if (typeof layerContainer === 'undefined') {
 			
-					var geojsonLayer = L.geoJson(aEntity, {
-					    style: {color: "#AF0000", "weight": 0 , "fillOpacity": 0.2}
-			   		});
+					var geojsonLayer = L.geoJson(aEntity);
+					$.each(geojsonLayer._layers,function(idx){	
+						this.setStyle(self._style(this.feature));
+					});
 					
 					layerContainer = {
 							link : [inner_url],
@@ -114,7 +200,7 @@ L.JsonTileLayer = L.GridLayer.extend({
 		var tile = document.createElement('div');
 		var url =  this.getTileUrl(coords);
 		
-		$.getJSON( url+"?callback=?" , this._getJsonRetriever(url,tile,done)  );
+		$.getJSON( url+"?callback=?" , $.proxy(this._getJsonRetriever(url,tile,done),this)  );
 		
 		return tile;
 	},

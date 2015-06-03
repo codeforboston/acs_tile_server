@@ -11,8 +11,17 @@ public class TilesEngine {
 
 	public static interface  TilesEngineModule {
 		
-			byte[] get(String iZoom, String iX, String iY) throws Exception;
+			/* Get an image representation of the tile */
+			byte[] get(String iField, String iZoom, String iX, String iY) throws Exception;
+			
+			/* Get a topology of the defined tile */
 			Topology getTopology(String iZoom, String iX, String iY) throws Exception;
+			
+			/* Retrieve properties defined for this module */
+			String[] getProperties();
+			
+			/* Get for a module classes definition for a particular field */ 
+			double[] getClasses(String iField);
 	
 	}
 	
@@ -29,10 +38,10 @@ public class TilesEngine {
 	}
 	
 	// Generate a buffer that contains data generated for the tile 
-	public static byte[] getTile(String iName, String iZoom, String iX, String iY) throws Exception{
+	public static byte[] getTile(String iName, String iField, String iZoom, String iX, String iY) throws Exception{
 		TilesEngineModule aModule = _tree.get(iName);
 		if (aModule!=null) {
-			return aModule.get(iZoom, iX, iY);
+			return aModule.get(iField,iZoom, iX, iY);
 		}
 		throw new Exception("Unable to find module name:"+iName); 
 	}
@@ -45,5 +54,23 @@ public class TilesEngine {
 		}
 		throw new Exception("Unable to find module name:"+iName); 
 	}
+	
+	// Generate a buffer that contains data generated for the tile 
+	public static double[] getClasses(String iName, String iField) throws Exception{
+		TilesEngineModule aModule = _tree.get(iName);
+		if (aModule!=null) {
+			return aModule.getClasses(iField);
+		}
+		throw new Exception("Unable to find module name:"+iName); 
+	}
 
+	// Generate a buffer that contains data generated for the tile 
+	public static String[] getProperties(String iName) throws Exception{
+		TilesEngineModule aModule = _tree.get(iName);
+		if (aModule!=null) {
+			return aModule.getProperties();
+		}
+		throw new Exception("Unable to find module name:"+iName); 
+	}
+	
 }

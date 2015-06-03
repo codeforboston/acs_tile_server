@@ -115,10 +115,10 @@ public class CensusACSServices {
 	
 	@GET
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
-	@Path("/tiles/{state}/{zoom}/{x}/{y}.png")
-	public byte[] tiles( @Context SecurityContext sc, @PathParam("state") String iState, @PathParam("zoom") String iZoom, @PathParam("x") String iX, @PathParam("y") String iY) throws Exception {
+	@Path("/{state}/tiles/{field}/{zoom}/{x}/{y}.png")
+	public byte[] tiles( @Context SecurityContext sc, @PathParam("state") String iState, @PathParam("field") String iField,  @PathParam("zoom") String iZoom, @PathParam("x") String iX, @PathParam("y") String iY) throws Exception {
 		try {
-			return TilesEngine.getTile(iState, iZoom, iX, iY);
+			return TilesEngine.getTile(iField,iState, iZoom, iX, iY);
 		} catch (Exception e) {
 			LOGGER.info("Image not generated ...");
 			throw new NotFoundException(e.getMessage());		
@@ -128,10 +128,36 @@ public class CensusACSServices {
 	
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	@Path("/jsontiles/{state}/{zoom}/{x}/{y}.json")
+	@Path("/{state}/jsontiles/{zoom}/{x}/{y}.json")
 	public Topology jsonTiles( @Context SecurityContext sc, @PathParam("state") String iState, @PathParam("zoom") String iZoom, @PathParam("x") String iX, @PathParam("y") String iY) throws Exception {
 		try {
 			return TilesEngine.getToplogyTile(iState, iZoom, iX, iY);
+		} catch (Exception e) {
+			LOGGER.info("Json not generated ...");
+			throw new NotFoundException(e.getMessage());		
+		}
+		
+	}
+	
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/{state}/classes/{field}.json")
+	public double[] getClasses( @Context SecurityContext sc, @PathParam("state") String iState, @PathParam("field") String iField) throws Exception {
+		try {
+			return TilesEngine.getClasses(iState, iField);
+		} catch (Exception e) {
+			LOGGER.info("Json not generated ...");
+			throw new NotFoundException(e.getMessage());		
+		}
+		
+	}
+	
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/{state}/list/properties.json")
+	public String[] getProperties( @Context SecurityContext sc, @PathParam("state") String iState) throws Exception {
+		try {
+			return TilesEngine.getProperties(iState);
 		} catch (Exception e) {
 			LOGGER.info("Json not generated ...");
 			throw new NotFoundException(e.getMessage());		
