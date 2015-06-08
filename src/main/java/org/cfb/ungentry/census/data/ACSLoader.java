@@ -37,6 +37,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.net.util.Base64;
 import org.cfb.ungentry.census.data.SequenceAndTableNumber.Element;
+import org.cfb.ungentry.census.data.TilesEngine.Item;
 import org.cfb.ungentry.census.data.TilesEngine.TilesEngineModule;
 
 import  json.graphic.JenksColorifierGeojson;
@@ -217,12 +218,13 @@ public class ACSLoader {
 		String _saving_path;
 		Display _display; 
 		
-		String[] _fields;
+		HashMap<String,Item> _fields;
 		HashMap<String,Colorifier> _colorifiers;
 
 		LevelTree<TileElement> _levelTree;
+		FeatureCollection _collection;
 
-		TopologyProcessor(ArcMap iMap, String iSavingPath, FeatureCollection iCollection, String[] iFields){
+		TopologyProcessor(ArcMap iMap, String iSavingPath, FeatureCollection iCollection, HashMap<String,Item> iFields){
 
 			_map = iMap;
 			_saving_path = iSavingPath;
@@ -232,6 +234,8 @@ public class ACSLoader {
 			_display.hide();
 			_display.start();
 			
+			_collection = iCollection;
+			
 			_fields = iFields;
 			_colorifiers =  buildColorifiers(iCollection, iFields); /* new JenksColorifierGeojson(aFeat ,iField); */
 
@@ -239,10 +243,10 @@ public class ACSLoader {
 
 		}
 
-		public  HashMap<String,Colorifier> buildColorifiers(FeatureCollection iCollection, String[] iFields){
+		public  HashMap<String,Colorifier> buildColorifiers(FeatureCollection iCollection, HashMap<String,Item> iFields){
 			HashMap<String,Colorifier> result = new HashMap<String,Colorifier>();
 		
-			for (String iField:iFields){
+			for (String iField:iFields.keySet()){
 				result.put(iField, new JenksColorifierGeojson(iCollection ,iField) );
 			}
 			
@@ -317,14 +321,13 @@ public class ACSLoader {
 		}
 
 		@Override
-		public String[] getProperties() {
-			// TODO Auto-generated method stub
+		public HashMap<String,Item> getProperties() {
 			return _fields;
 		}
 
 	}
 
-	public static void buildTopoJson(String iSavingPath, String iGeoCSVFile, String iState, String[] iFields){
+	public static void buildTopoJson(String iSavingPath, String iGeoCSVFile, String iState, HashMap<String,Item> iFields){
 
 		String aStateCode = String.format("%02d0", new Integer(IndicesBuilder.listStateNumberByName().get(iState) ) );
 		System.out.println("Proceed for state:"+aStateCode);
@@ -334,7 +337,7 @@ public class ACSLoader {
 		Merger aMerger = new Merger();
 		aMerger.addStep(new MergeStep("GISJOIN","%s", iGeoCSVFile, "NHGISCODE","%s", true));
 
-		System.out.println("Proceed for field:"+iFields[0]);
+		System.out.println("Proceed for field:"+iFields.keySet().iterator().next());
 
 		FeatureCollection aFeat;
 		try {
@@ -347,7 +350,7 @@ public class ACSLoader {
 
 			aFeat._bnd = aFeat.getMergedBound();
 
-			quickDisplay(aFeat, iFields[0]);
+			quickDisplay(aFeat, iFields.keySet().iterator().next());
 
 			TopologyProcessor aProcessor = new TopologyProcessor(aMap, iSavingPath,  aFeat, iFields);
 
@@ -378,12 +381,20 @@ public class ACSLoader {
 
 		String aList = new String(Base64.decodeBase64(iList));
 
+		HashMap<String,Item> aFields = new HashMap<String,Item>();
+		
 		String[] aFilter = aList.split(":");
 
 		HashSet<Integer> aSet = new HashSet<Integer>();
 		for (String aField:aFilter){
 			String[] aFieldRange = aField.split("_");
 			aSet.add(new Integer(aFieldRange[1]).intValue());
+			
+			Element elem = aSeq._tableIDMap.get(aField);
+			Item item = new Item();
+			item.categorie = elem.category;
+			item.title = elem.title;
+			aFields.put(aField, item);
 		}
 		Integer[] aSequences = aSet.toArray(new Integer[aSet.size()]);
 
@@ -427,7 +438,7 @@ public class ACSLoader {
 
 		// At that point we have extracted data from ACS data
 		// We need to continue to build the map
-		buildTopoJson(aACSFileName, geoAcsCSVFile, iState, aFilter);
+		buildTopoJson(aACSFileName, geoAcsCSVFile, iState, aFields);
 
 		return "OK";
 	}

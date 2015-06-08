@@ -48,7 +48,6 @@ L.JsonTileLayer = L.GridLayer.extend({
 		if (!L.Browser.android) {
 			this.on('tileunload', this._onTileRemove);
 		}
-		
 
 		var self = this;
 		var prop_url =  this._protocol+"//"+this._host+"/"+options.id+"/list/properties.json?callback=?";
@@ -59,6 +58,10 @@ L.JsonTileLayer = L.GridLayer.extend({
 			self._list_properties = data;
 			self._properties_classes = {};
 			
+			if (options.onLoadedPropertiesList) {
+				options.onLoadedPropertiesList(data);
+			}		
+		
 		});
 		
 	},
@@ -73,7 +76,7 @@ L.JsonTileLayer = L.GridLayer.extend({
 		console.log(this);
 		if (this._list_properties){
 			
-			if (this._list_properties.indexOf(property)>=0) {
+			if (this._list_properties[property]) {
 				this._field = property;
 				var self = this;
 				$.getJSON( this._protocol+"//"+this._host+"/"+this.options.id+"/classes/"+this._field+".json?callback=?" , function(data){
@@ -115,10 +118,14 @@ L.JsonTileLayer = L.GridLayer.extend({
 			var val = feature.properties[this._field];
 			var classes = this._properties_classes[this._field];
 			
-			for (var i=1; i<classes.length;i++){
-				if (val<=classes[i]) {
-					return {color: colorbrewer['YlGnBu'][classes.length-1][i], "weight": 0 , "fillOpacity": 0.5};
+			if (classes) {
+				for (var i=1; i<classes.length;i++){
+					if (val<=classes[i]) {
+						return {color: colorbrewer['YlGnBu'][classes.length-1][i], "weight": 0 , "fillOpacity": 0.5};
+					}
 				}
+			} else {
+				return {color: "#AF0000", "weight": 0 , "fillOpacity": 0.1};
 			}
 			
 		} else {

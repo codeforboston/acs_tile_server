@@ -30,6 +30,7 @@ import org.cfb.ungentry.census.data.ACSLoader;
 import org.cfb.ungentry.census.data.IndicesBuilder;
 import org.cfb.ungentry.census.data.SequenceAndTableNumber.Element;
 import org.cfb.ungentry.census.data.TilesEngine;
+import org.cfb.ungentry.census.data.TilesEngine.Item;
 import org.cfb.ungentry.census.toolbox.Toolbox;
 import org.cfb.ungentry.network.DownloadFTPTask;
 import org.cfb.ungentry.network.DownloadFTPTask.Status;
@@ -155,7 +156,7 @@ public class CensusACSServices {
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/{state}/list/properties.json")
-	public String[] getProperties( @Context SecurityContext sc, @PathParam("state") String iState) throws Exception {
+	public HashMap<String,Item> getProperties( @Context SecurityContext sc, @PathParam("state") String iState) throws Exception {
 		try {
 			return TilesEngine.getProperties(iState);
 		} catch (Exception e) {

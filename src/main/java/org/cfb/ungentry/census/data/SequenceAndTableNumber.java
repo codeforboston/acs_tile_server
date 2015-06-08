@@ -23,14 +23,18 @@ public class SequenceAndTableNumber {
 
 	// This class create an internal structure to represent Sequence_Number_and_Table_Number_Lookup.csv file
 	
+	
+	
 	public static class Element implements Comparable<Element> {
 		
+		public String category;
 		public String name;
 		public String type;
 		public String title;
 		public int sequence;
 		public int position;
 		HashMap<String,Integer> eval = new HashMap<String,Integer>(); 
+		
 		
 		public int compareTo(Element o) {
 			return type.compareTo(o.type);
@@ -118,15 +122,17 @@ public class SequenceAndTableNumber {
 							aElem.title = aTableTitle;
 							aElem.type = "data";
 							aElem.sequence = new Integer(aSequenceNumber);
+							aElem.category = aCurrentTableName;
 							aCurrentTable.add(aElem);
 							
 							addToSequenceMap(aElem);
 							
-							_tableIDMap.put(aElem.name, aElem);
+							_tableIDMap.put(getName(aElem), aElem);
 							
 							double d = new Double(aLineNumber);
 							double x = d - (long) d;
 							if (x==0) cLineNumber++; // x.5 values for aLineNumber
+							
 							
 						} catch (NumberFormatException e){
 							

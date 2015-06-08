@@ -18,8 +18,11 @@
 </head>
 
 <body>
+
+	<select id="property_select"></select>
+
 	<div id="map"></div>
-	
+
 	<script>
 
 		var map = L.map('map').setView([42.354, -71.065], 10);
@@ -29,11 +32,26 @@
 		var jsonTile = L.jsonTileLayer('https://localhost:10110/{id}/jsontiles/{z}/{x}/{y}.json', {
 			maxZoom: 16,
 			attribution: 'Census ACS Server',
-			id: 'censusacs/rest/censusacs/MA'
+			id: 'censusacs/rest/censusacs/MA',
+			onLoadedPropertiesList : function(data){
+
+				var html = [];
+				for (var idx in data){
+					html.push("<option value='"+idx+"'>"+data[idx].categorie+" "+data[idx].title+"</option>")
+				}
+				$("#property_select").html(html.join(""));
+				$("#property_select").change(function(e){
+					jsonTile.selectProperty($("#property_select").val());
+				});
+				for (var firstKey in data) break;
+				jsonTile.selectProperty(firstKey);
+
+			}
 		});
 		
 		jsonTile.addTo(map);
-		jsonTile.selectProperty("B00002_1_8");
+
+		
 
 	</script>
 	

@@ -9,6 +9,11 @@ import org.cfb.ungentry.census.toolbox.LevelTree;
 
 public class TilesEngine {
 
+	public static class Item {
+		String categorie;
+		String title;
+	}
+	
 	public static interface  TilesEngineModule {
 		
 			/* Get an image representation of the tile */
@@ -18,7 +23,7 @@ public class TilesEngine {
 			Topology getTopology(String iZoom, String iX, String iY) throws Exception;
 			
 			/* Retrieve properties defined for this module */
-			String[] getProperties();
+			HashMap<String,Item> getProperties();
 			
 			/* Get for a module classes definition for a particular field */ 
 			double[] getClasses(String iField);
@@ -65,7 +70,7 @@ public class TilesEngine {
 	}
 
 	// Generate a buffer that contains data generated for the tile 
-	public static String[] getProperties(String iName) throws Exception{
+	public static HashMap<String,Item> getProperties(String iName) throws Exception{
 		TilesEngineModule aModule = _tree.get(iName);
 		if (aModule!=null) {
 			return aModule.getProperties();
